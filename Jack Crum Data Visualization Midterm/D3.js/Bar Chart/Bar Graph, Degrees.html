@@ -1,0 +1,110 @@
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Example chart</title>
+    <style>
+        .axis text{
+          font-family: Helvetica, Arial, sans-serif;
+          font-size: 12px;
+          text-anchor: end;
+        }
+        .axis path{
+          fill:none;
+          stroke:black;
+          stroke-width: 1.5px;
+        }
+        .bar{
+            stroke: black;
+            fill: crimson;
+        }
+
+    </style>
+    <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+</head>
+<body>
+
+<script>
+    //define margins and height and width of canvas
+    var margin = {top:30, right:0, bottom:200, left:60},
+        width  = 1200 - margin.left - margin.right,
+        height = 700 - margin.top  - margin.bottom;
+
+    //add svg canvas
+    var svg = d3.select("body")
+        .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom);
+
+    var chart = svg.append("g")
+        .attr("transform", "translate(" + margin.left + ", " + margin.top + ")");
+        //translate to the margins
+
+    var x = d3.scale.ordinal()
+        .rangeRoundBands([0, width], .25); // the range (chart area) we want to place each bar
+
+    var y = d3.scale.linear()
+        .range([height, 0]); //the space available in our chart
+
+    var xAxis = d3.svg.axis()
+        .scale(x)
+        .orient("bottom");
+
+    var yAxis = d3.svg.axis()
+        .scale(y)
+        .orient("left");
+
+    d3.csv("degrees.csv", convertToNumber, function(error, data){
+
+        //sort data from highest to lowest median salary
+        data.sort(function(a,b){ return b.MedianSalary - a.MedianSalary; });
+
+        var degrees = data.map(function(d){ return d.Major; });
+        var medianSalary =  data.map(function(d){return d.MedianSalary;});
+        //newly created degrees variable is now an array with values
+        //newly created medianSalary is now an array with values
+
+        //set the domains for x and y functions
+        x.domain(degrees);
+        y.domain([0, d3.max(medianSalary) ]);
+
+        chart.selectAll(".bar")
+            .data(data)
+            .enter()
+            .append("rect")
+            .attr("x", function(d){ return x(d.Major); })
+            .attr("y", function(d){ return y(d.MedianSalary); })
+            .attr("width", function(d){ return x.rangeBand(); }) // range band is width of bars
+            .attr("height", function(d){ return height - y(d.MedianSalary); })
+            .attr("class", "bar")
+
+        //setting the axes
+        svg.append("g")
+            .attr("class", "y axis")
+            .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+            .call(yAxis)
+            .append("text")
+              .attr("class", "label")
+              .attr("x", width/2)
+              .attr("y", 20)
+              .style("text-anchor", "middle")
+              .style("font-size", "34px")
+              .text("Median Income by College Major");
+
+        svg.append("g")
+            .attr("class", "x axis")
+            .attr("transform", "translate(" + margin.left + "," + (height + margin.top) + ")")
+            .call(xAxis)
+            .selectAll("text")
+            .attr("transform", "translate(-10,0)rotate(-55)")
+            .style("text-anchor", "end");
+
+    });
+
+    function convertToNumber(d){
+        d.MedianSalary = +d.MedianSalary; //converts median salary from string to integer
+        return d;
+    }
+
+</script>
+</body>
+</html>
